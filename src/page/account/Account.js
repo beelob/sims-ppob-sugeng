@@ -11,7 +11,7 @@ import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import EditIcon from "@mui/icons-material/Edit";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../../utils/axios";
 import { setOpen as setSnackbarOpen } from "../../components/flash_info/flashInfoSlice";
 import { setCurrentUser } from "../../components/auth/authSlice";
@@ -23,14 +23,38 @@ const Account = () => {
   const [emailError, setEmailError] = useState("");
   const [firstNameError, setFirstNameError] = useState("");
   const [lastNameError, setLastNameError] = useState("");
-
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  
   const [isLoading, setIsLoading] = useState(false);
-
+  
   const { currentUser, isGuest } = useSelector((state) => state.auth);
 
   const navigate = useNavigate();
-  const location = useLocation();
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (currentUser) {
+       setFirstName(currentUser.first_name)
+       setLastName(currentUser.last_name)
+    }
+  }, [currentUser])
+
+  const handleCancel = () => {
+    setFirstName(currentUser.first_name)
+    setLastName(currentUser.last_name)
+    setFirstNameError("")
+    setLastNameError("")
+    setOnEdit(false)
+  }
+
+  const handleOnFirstNameChange = (e) => {
+    setFirstName(e.target.value)
+  }
+  
+  const handleOnLastNameChange = (e) => {
+    setLastName(e.target.value)
+  }
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -72,14 +96,10 @@ const Account = () => {
           // dispatch(
           //   setSnackbarOpen({ text: response.data.message, type: "error" })
           // );
-          if (response.data.status === 108) {
-            if (response.data.message.includes("first_name")) {
-              setFirstNameError(response.data.message);
-            } else if (response.data.message.includes("last_name")) {
-              setLastNameError(response.data.message);
-            }
-          } else {
-            setAllError(response.data.message);
+          if (response.data.message.includes("first_name")) {
+            setFirstNameError(response.data.message);
+          } else if (response.data.message.includes("last_name")) {
+            setLastNameError(response.data.message);
           }
         }
       });
@@ -117,6 +137,14 @@ const Account = () => {
       }
     }
   };
+
+  const handleClickSubmit = (e) => {
+ if (!onEdit) {
+  e.preventDefault()
+  setOnEdit(true)
+ }
+
+  }
 
   const handleLogout = () => {
     localStorage.removeItem("SimsPpobAdmTkn");
@@ -209,7 +237,8 @@ const Account = () => {
             id="first_name"
             label=""
             name="first_name"
-            defaultValue={currentUser.first_name}
+            value={firstName}
+            onChange={handleOnFirstNameChange}
             disabled={!onEdit}
             sx={{ mb: 3 }}
             InputProps={{
@@ -230,7 +259,8 @@ const Account = () => {
             id="last_name"
             label=""
             name="last_name"
-            defaultValue={currentUser.last_name}
+            value={lastName}
+            onChange={handleOnLastNameChange}
             disabled={!onEdit}
             sx={{ mb: 3 }}
             InputProps={{
@@ -242,7 +272,7 @@ const Account = () => {
             }}
           />
           <Button
-            type={onEdit ? "button" : "submit"}
+            type={onEdit ? "submit" : "button"}
             fullWidth
             variant="contained"
             sx={{
@@ -252,7 +282,7 @@ const Account = () => {
             }}
             disabled={isLoading}
             disableElevation
-            onClick={() => setOnEdit((prev) => !prev)}
+            onClick={handleClickSubmit}
           >
             {isLoading && <CircularProgress size={20} sx={{ mr: 1 }} />}
             {onEdit ? "Simpan" : "Edit Profile"}
@@ -282,7 +312,7 @@ const Account = () => {
                 textTransform: "capitalize",
               }}
               disableElevation
-              onClick={() => setOnEdit((prev) => !prev)}
+              onClick={handleCancel}
             >
               Batal
             </Button>
